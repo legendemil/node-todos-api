@@ -4,6 +4,7 @@ const { ObjectID } = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require('./../db/models/todo');
+const {User} = require('./../db/models/user');
 
 const todos = [{
 	_id: new ObjectID(),
@@ -17,9 +18,12 @@ const todos = [{
 }];
 
 beforeEach(done => {
+
 	Todo.remove({}).then(() => {
 		return Todo.insertMany(todos);
-	}).then(() => done());
+	})
+	.then(() => done());
+
 });
 
 describe('POST /todos', () => {
@@ -129,7 +133,6 @@ describe('DELETE /todos/:id', () => {
 					return done(err);
 
 				Todo.findById(hexId).then(todo => {
-					console.log(todo)
 					expect(todo).toNotExist();
 					done();
 				}).catch(e => done(err));
@@ -187,6 +190,53 @@ describe('PATCH /todos/:id', () => {
 			.expect(res => {
 				expect(res.body.todo.completedAt).toBe(null);
 			})
+			.end(done);
+	});
+
+});
+
+describe('POST /users', () => {
+
+	before(done => {
+		User.remove({}).then(() => done());
+	});
+
+	let user = {
+		"email": "mike@gmail.com",
+		"password": "zaq1@WSX",
+		"tokens": [{
+			"access": "auth",
+			"token": "sfsdfdgfdgdfgdfgfdfdg"
+		}]
+	};	
+
+	it('should return new user object on success', (done) => {
+		request(app)
+			.post('/users')
+			.send(user)
+			.expect(200)
+			.expect(res => {
+				let { email, password, tokens } = res.body.user;
+				expect(email).toBe(user.email);
+				expect(password).toBe(user.password);
+				expect(tokens).toBeA(Array);
+			})
+			.end(done);
+	});
+
+	it('should not return new user if email is not unique', done => {
+		request(app)
+			.post('/users')
+			.send(user)
+			.expect(400)
+			.end(done);
+	});
+
+	it('should not return new user if the does not have specified email, password and tokens', done => {
+		request(app)
+			.post('/users')
+			.send({})
+			.expect(400)
 			.end(done);
 	});
 
