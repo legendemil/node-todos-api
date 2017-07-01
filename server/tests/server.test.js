@@ -216,10 +216,9 @@ describe('POST /users', () => {
 			.send(user)
 			.expect(200)
 			.expect(res => {
-				let { email, password, tokens } = res.body.user;
+				let { email, password } = res.body.user;
 				expect(email).toBe(user.email);
 				expect(password).toBe(user.password);
-				expect(tokens).toBeA(Array);
 			})
 			.end(done);
 	});
@@ -232,7 +231,7 @@ describe('POST /users', () => {
 			.end(done);
 	});
 
-	it('should not return new user if the does not have specified email, password and tokens', done => {
+	it('should not return new user if the does not have specified email, password', done => {
 		request(app)
 			.post('/users')
 			.send({})
